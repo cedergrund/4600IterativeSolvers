@@ -293,6 +293,7 @@ def generatePDmatrix(
     return A, convergence_mat, alpha
 
 
-print("\n")
-driver()
-print("\n")
+if __name__ == "__main__":
+    print("\n")
+    driver()
+    print("\n")
