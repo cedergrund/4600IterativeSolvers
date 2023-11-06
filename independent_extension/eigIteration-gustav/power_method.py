@@ -2,23 +2,6 @@ import numpy as np
 import time
 import scipy
 
-"""
-todo:
-
-arnoldi + lanczos write code
-
-walk
-
-go over hw solutions
-
-mashed potatoes
-
-apply arnoldi to richardsons to see if it is faster than alternate method
-
-text kevin to check in after midterm
-
-
-"""
 
 """
 notes:
