@@ -2,7 +2,7 @@ import numpy as np
 
 # finding minimizer (y) not implemented
 # only works if k = dim(A)[0]
-def gmres(A, b, x0, k, tol=1e-8):
+def gmres(A, b, x0, k, tol=1e-10):
 
     """
     GMRES algorithm for solving the linear system Ax = b.
@@ -24,56 +24,63 @@ def gmres(A, b, x0, k, tol=1e-8):
     x0 = np.reshape(x0, [len(x0),])
     b = np.reshape(b, [len(b),])
 
-    # initialization (HELP)
-    H = np.zeros(np.shape(A))
-    V = np.zeros([len(b), k])
+    # number of Arnoldi iterations 
+    k = n
+
+    # H is the Hessenberg matrix we will generate 
+    H = np.zeros([k+1, k])
+
+    # Qn is the first n columns of Q which provides the similarity transformation to H
+    V = np.zeros([n,k+1])
+
+    # e1 the first cannonical vector 
+    e1 = np.zeros(k+1)
+    e1[0] = 1
 
     # 1.1
     r_init = b - A @ x0
-
-    # 1.2
-    v0 = r_init / np.linalg.norm(r_init)
-    V[:,0] = v0
+    Beta = np.linalg.norm(r_init)
+    V[:,0] = r_init / Beta
 
     # 2.1
-    for j in range(k-1):
+    for j in range(1, k+1):
 
         # 2.2
-        for i in range(j+1):
-            H[i,j] = A @ V[:,j] @ V[:,j]
+        for i in range(1, j+1):
+            H[i-1,j-1] = (A @ V[:,j-1]) @ V[:,i-1]
 
         # 2.3
-        vhat = A @ V[:,j]
-        for i in range(j+1):
-            vhat -= H[i,j] * V[:,i]
+        vhat = A @ V[:,j-1]
+        for i in range(1, j+1):
+            vhat -= H[i-1,j-1] * V[:,i-1]
 
         # 2.4
-        H[j+1,j] = np.linalg.norm(vhat)
+        H[j,j-1] = np.linalg.norm(vhat)
 
+        
         # 2.5 
-        V[:, j+1] = vhat / H[j+1, j]
+        V[:, j] = vhat / H[j, j-1]
 
-        # TODO 
-        # Calculate minimizing vector y for ||Be_1 - H_ky||
-        y = x0
 
     # 3.1
-    x = x0 + V @ np.transpose(y)
+    y, _, _, _ = np.linalg.lstsq(H, Beta*e1, rcond=None)
+    x = x0 + V[:,:k] @ y
 
-    print('H')
-    print(H)
-    print()
-    print('V')
-    print(V)
+    # test 
+    print('inside the function')
+    print(np.linalg.norm(A@x - b))
+    print(x)
         
     # currently just returns x0
-    return x, False, k 
+    return x, False, k, A
 
 # test case 
-size  = 3
-A = np.random.rand(size, size)
-b = np.random.rand(size, 1)
-x0 =  np.random.rand(size, 1)
-solution, converged, num_iter = gmres(A, b, x0, size)
+n  = 20
+A = np.random.rand(n, n)
+b = np.random.rand(n, 1)
+x0 =  np.random.rand(n, 1)
+
+x, converged, num_iter, A0 = gmres(A, b, x0, n)
 print('\n', "function returned")
-print(solution, converged, num_iter)
+print(x, converged, num_iter)
+print('norm(Ax - b):', np.linalg.norm(A@x - b.transpose()))
