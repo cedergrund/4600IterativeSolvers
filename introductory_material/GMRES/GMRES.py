@@ -1,8 +1,7 @@
 import numpy as np
 
-# finding minimizer (y) not implemented
-# only works if k = dim(A)[0]
-def gmres(A, b, x0, k, tol=1e-10):
+# implements the GMRES algorithm
+def gmres(A, b, x0, k, tol=1E-10):
 
     """
     GMRES algorithm for solving the linear system Ax = b.
@@ -21,16 +20,14 @@ def gmres(A, b, x0, k, tol=1e-10):
     """
 
     # shape compatibility 
+    n = np.shape(A)[0]
     x0 = np.reshape(x0, [len(x0),])
     b = np.reshape(b, [len(b),])
-
-    # number of Arnoldi iterations 
-    k = n
 
     # H is the Hessenberg matrix we will generate 
     H = np.zeros([k+1, k])
 
-    # Qn is the first n columns of Q which provides the similarity transformation to H
+    # Vn is the first n columns of V giving similarity transformation to H
     V = np.zeros([n,k+1])
 
     # e1 the first cannonical vector 
@@ -45,9 +42,9 @@ def gmres(A, b, x0, k, tol=1e-10):
     # 2.1
     for j in range(1, k+1):
 
-        # 2.2
+        # 2.2 (this does not match pseudocode)
         for i in range(1, j+1):
-            H[i-1,j-1] = (A @ V[:,j-1]) @ V[:,i-1]
+            H[i-1,j-1] = (A @ V[:,j-1]) @ V[:,i-1] # uses i instead of j here 
 
         # 2.3
         vhat = A @ V[:,j-1]
@@ -57,30 +54,48 @@ def gmres(A, b, x0, k, tol=1e-10):
         # 2.4
         H[j,j-1] = np.linalg.norm(vhat)
 
-        
         # 2.5 
         V[:, j] = vhat / H[j, j-1]
 
+        # 3.1
+        y, _, _, _ = np.linalg.lstsq(H[:,:j], Beta*e1, rcond=None)
+        x = x0 + V[:,:j] @ y
 
-    # 3.1
-    y, _, _, _ = np.linalg.lstsq(H, Beta*e1, rcond=None)
-    x = x0 + V[:,:k] @ y
+        '''
+        # Debugging 
+        if j == 2:
+            print('beginning shapes')
+            print('A', np.shape(A))
+            print('V', np.shape(V))
+            print('H', np.shape(H))
+            print('x', np.shape(x))
+            print('y', np.shape(y))
+            print('e1', np.shape(e1))
+            print('x0', np.shape(x0))
+        '''
 
-    # test 
-    print('inside the function')
-    print(np.linalg.norm(A@x - b))
-    print(x)
+        # we converged on an approximate solution within tol 
+        if (np.linalg.norm(A@x - b.transpose()) < tol):
+            return x, True, j
         
-    # currently just returns x0
-    return x, False, k, A
+    # did not converge of an approximate solution
+    return x, False, k
 
 # test case 
-n  = 20
+n  = 100
 A = np.random.rand(n, n)
 b = np.random.rand(n, 1)
-x0 =  np.random.rand(n, 1)
+#x0 =  np.random.rand(n, 1)
+x0 = np.zeros([n,1])
 
-x, converged, num_iter, A0 = gmres(A, b, x0, n)
-print('\n', "function returned")
-print(x, converged, num_iter)
-print('norm(Ax - b):', np.linalg.norm(A@x - b.transpose()))
+# calling GMRES 
+x, converged, num_iter = gmres(A, b, x0, n)
+
+# if it doesn't converge on the first try, keep trying with updated initial guess
+while converged == False:
+    x, converged, num_iter = gmres(A, b, x, n)
+
+# function outputs 
+print('converged:', converged)
+print('number of iterations:', num_iter)
+print('norm(Ax - b):', np.linalg.norm(A @ x - b.transpose()))
