@@ -57,32 +57,19 @@ def gmres(A, b, x0, k, tol=1E-10):
         # 2.5 
         V[:, j] = vhat / H[j, j-1]
 
-        # 3.1
-        y, _, _, _ = np.linalg.lstsq(H[:,:j], Beta*e1, rcond=None)
-        x = x0 + V[:,:j] @ y
+    # 3.1
+    y, _, _, _ = np.linalg.lstsq(H[:,:j], Beta*e1, rcond=None)
+    x = x0 + V[:,:j] @ y
 
-        '''
-        # Debugging 
-        if j == 2:
-            print('beginning shapes')
-            print('A', np.shape(A))
-            print('V', np.shape(V))
-            print('H', np.shape(H))
-            print('x', np.shape(x))
-            print('y', np.shape(y))
-            print('e1', np.shape(e1))
-            print('x0', np.shape(x0))
-        '''
-
-        # we converged on an approximate solution within tol 
-        if (np.linalg.norm(A@x - b.transpose()) < tol):
-            return x, True, j
+    # we converged on an approximate solution within tol 
+    if (np.linalg.norm(A@x - b.transpose()) < tol):
+        return x, True, j
         
     # did not converge of an approximate solution
     return x, False, k
 
 # test case 
-n  = 100
+n  = 2000
 A = np.random.rand(n, n)
 b = np.random.rand(n, 1)
 #x0 =  np.random.rand(n, 1)
@@ -93,7 +80,8 @@ x, converged, num_iter = gmres(A, b, x0, n)
 
 # if it doesn't converge on the first try, keep trying with updated initial guess
 while converged == False:
-    x, converged, num_iter = gmres(A, b, x, n)
+    x, converged, _ = gmres(A, b, x, n)
+    num_iter += _
 
 # function outputs 
 print('converged:', converged)
