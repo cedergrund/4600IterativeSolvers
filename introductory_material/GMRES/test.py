@@ -1,4 +1,4 @@
-# citation for code 
+# citation for code https://johnwlambert.github.io/least-squares/ 
 import numpy as np
 from typing import Tuple
 
