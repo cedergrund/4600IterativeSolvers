@@ -57,19 +57,19 @@ def gmres(A, b, x0, k, tol=1E-10):
         # 2.5 
         V[:, j] = vhat / H[j, j-1]
 
-    # 3.1
-    y, _, _, _ = np.linalg.lstsq(H[:,:j], Beta*e1, rcond=None)
-    x = x0 + V[:,:j] @ y
+        # 3.1
+        y, _, _, _ = np.linalg.lstsq(H[:,:j], Beta*e1, rcond=None)
+        x = x0 + V[:,:j] @ y
 
-    # we converged on an approximate solution within tol 
-    if (np.linalg.norm(A@x - b.transpose()) < tol):
-        return x, True, j
+        # we converged on an approximate solution within tol 
+        if (np.linalg.norm(A@x - b.transpose()) < tol):
+            return x, True, j
         
     # did not converge of an approximate solution
     return x, False, k
 
 # test case 
-n  = 2000
+n  = 20
 A = np.random.rand(n, n)
 b = np.random.rand(n, 1)
 #x0 =  np.random.rand(n, 1)
