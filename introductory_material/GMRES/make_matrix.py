@@ -13,8 +13,11 @@ def build_mat(n, opt, density = 0.1):
         opt == 1: full rank with 3 distinct e-vals
         opt == 2: full rank and all e-vals in ball of radius == 1e-5 centered at 1 
         opt == 3: ill-conditions ie K > 1E20
+        opt -- 4: one zero eigenvector and b in range(A)
     Output:
     A: Matrix with desired specifications
+    b: a random matrix 
+        - unless opt == 4 then b in range(A)
     '''
 
     # Create a random matrix R with random entries

@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 # import files 
-import GMRES
+from scipy.sparse.linalg import gmres
 import make_matrix
 
 if __name__ == "__main__":
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # logger
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    file_handler = logging.FileHandler(os.path.join(out_dir,'results_2.txt'), mode='w')
+    file_handler = logging.FileHandler(os.path.join(out_dir,'other_GMRES.txt'), mode='w')
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     run_tests = [1, 1, 1, 1, 1]
     x0_zeros = True
     max_epochs = 3
-    max_iter = max_epochs*n
+    max_iter = n
     tol = 1E-10
 
     # running tests 
@@ -49,13 +49,7 @@ if __name__ == "__main__":
 
             # call GMRES 
             logger.debug(f'GMRES for test: {i}')
-            x, converged, num_iter = GMRES.gmres(A, b, x0, n, tol)
-
-            # if it doesn't converge on the first try, keep trying with updated initial guess
-            while converged == False and num_iter < max_iter:
-                logger.debug(f'number of iterations: {num_iter}')
-                x, converged, _ = GMRES.gmres(A, b, x, n)
-                num_iter += _
+            x, info = gmres(A, b, x0, tol)
 
             # timing 
             toc = time.time()
@@ -65,12 +59,15 @@ if __name__ == "__main__":
             metadata = {
                 'seconds elapsed' : time_elapsed,
                 'size of n' : n,
-                'number of iterations' : num_iter,
-                'converged' : converged,
+                'number of epochs' : max_epochs,
+                'converged' : info == 0,
                 'x0_zeros' : x0_zeros,
-                'max_epochs' : max_epochs,
-                '||Ax - b||' : np.linalg.norm(A@x - b.transpose()),
-                'tol' : tol
+                'max_epochs' : max_epochs, 
+                '||Ax - b||' : np.linalg.norm(A@x - b),
+                'tol' : tol,
+                'A' : np.shape(A),
+                'x' : np.shape(x),
+                'b' : np.shape(b)
             }
             logger.debug('metadata')
             for key, value in metadata.items():

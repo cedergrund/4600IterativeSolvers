@@ -23,7 +23,7 @@ def arnoldi_single_iter(A: np.ndarray, Q: np.ndarray, k: int) -> Tuple[np.ndarra
     q /= h[k+1]
     return h,q
 
-def gmres(A: np.ndarray, b: np.ndarray, x: np.ndarray, max_iters: int) -> np.ndarray:
+def gmres(A: np.ndarray, b: np.ndarray, x: np.ndarray, max_iters: int, EPSILON = 1e-10) -> np.ndarray:
     """Solve linear system via the Generalized Minimal Residual Algorithm.
 
     Args:
