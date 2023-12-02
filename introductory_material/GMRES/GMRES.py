@@ -1,5 +1,8 @@
 import numpy as np
 
+# REMOVE LATEDR
+import make_matrix
+
 # implements the GMRES algorithm
 def gmres(A, b, x0, k, tol=1E-10):
 
@@ -68,22 +71,25 @@ def gmres(A, b, x0, k, tol=1E-10):
     # did not converge of an approximate solution
     return x, False, k
 
-# test case 
-n  = 20
-A = np.random.rand(n, n)
-b = np.random.rand(n, 1)
-#x0 =  np.random.rand(n, 1)
-x0 = np.zeros([n,1])
+if __name__ == "__main__":
+    # test case 
+    n  = 20
+    A = np.random.rand(n, n)
+    b = np.random.rand(n, 1)
+    #x0 =  np.random.rand(n, 1)
+    x0 = np.zeros([n,1])
 
-# calling GMRES 
-x, converged, num_iter = gmres(A, b, x0, n)
+    A, b = make_matrix.build_mat(n, 0)
 
-# if it doesn't converge on the first try, keep trying with updated initial guess
-while converged == False:
-    x, converged, _ = gmres(A, b, x, n)
-    num_iter += _
+    # calling GMRES 
+    x, converged, num_iter = gmres(A, b, x0, n)
 
-# function outputs 
-print('converged:', converged)
-print('number of iterations:', num_iter)
-print('norm(Ax - b):', np.linalg.norm(A @ x - b.transpose()))
+    # if it doesn't converge on the first try, keep trying with updated initial guess
+    while converged == False and num_iter < 5*n:
+        x, converged, _ = gmres(A, b, x, n)
+        num_iter += _
+
+    # function outputs 
+    print('converged:', converged)
+    print('number of iterations:', num_iter)
+    print('norm(Ax - b):', np.linalg.norm(A @ x - b.transpose()))

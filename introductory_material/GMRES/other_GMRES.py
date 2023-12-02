@@ -117,13 +117,14 @@ def arnoldi(A: np.ndarray, b: np.ndarray, k: int):
         Q[:,j+1] /= H[j+1,j]
     return Q,H
 
-# test case 
-n  = 100
-A = np.random.rand(n, n)
-b = np.random.rand(n, 1)
-#x0 =  np.random.rand(n, 1)
-x0 = np.zeros([n,1])
+if __name__ == "__main__":
+    # test case 
+    n  = 20
+    A = np.random.rand(n, n)
+    b = np.random.rand(n, 1)
+    #x0 =  np.random.rand(n, 1)
+    x0 = np.zeros([n,1])
 
-# calling GMRES 
-x = gmres(A, b, x0, n)
-print('norm(Ax - b):', np.linalg.norm(A @ x - b.transpose()))
+    # calling GMRES 
+    x = gmres(A, b, x0, n)
+    print('norm(Ax - b):', np.linalg.norm(A @ x - b.transpose()))

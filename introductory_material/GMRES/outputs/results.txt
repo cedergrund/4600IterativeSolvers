@@ -1,0 +1,70 @@
+2023-12-02 00:39:27,341 - DEBUG - /home/GMRES/outputs
+
+2023-12-02 00:39:28,130 - DEBUG - GMRES for test: 0
+2023-12-02 01:13:21,788 - DEBUG - Did not Converge on first epoch, performing additional epochs
+2023-12-02 01:13:21,788 - DEBUG - number of iterations: 2000
+2023-12-02 01:47:05,779 - DEBUG - Did not Converge on first epoch, performing additional epochs
+2023-12-02 01:47:05,779 - DEBUG - number of iterations: 4000
+2023-12-02 02:20:46,442 - DEBUG - metadata
+2023-12-02 02:20:46,442 - DEBUG - seconds elapsed: 6078.310832262039
+2023-12-02 02:20:46,442 - DEBUG - size of n: 2000
+2023-12-02 02:20:46,442 - DEBUG - number of iterations: 6000
+2023-12-02 02:20:46,442 - DEBUG - converged: False
+2023-12-02 02:20:46,442 - DEBUG - x0_zeros: True
+2023-12-02 02:20:46,443 - DEBUG - max_epochs: 3
+2023-12-02 02:20:46,443 - DEBUG - ||Ax - b||: 0.12830158581752443
+2023-12-02 02:20:46,443 - DEBUG - tol: 1e-10
+2023-12-02 02:20:46,443 - DEBUG - 
+
+2023-12-02 02:20:47,215 - DEBUG - GMRES for test: 1
+2023-12-02 02:20:47,242 - DEBUG - metadata
+2023-12-02 02:20:47,242 - DEBUG - seconds elapsed: 0.025462627410888672
+2023-12-02 02:20:47,242 - DEBUG - size of n: 2000
+2023-12-02 02:20:47,243 - DEBUG - number of iterations: 3
+2023-12-02 02:20:47,243 - DEBUG - converged: True
+2023-12-02 02:20:47,243 - DEBUG - x0_zeros: True
+2023-12-02 02:20:47,243 - DEBUG - max_epochs: 3
+2023-12-02 02:20:47,244 - DEBUG - ||Ax - b||: 1.755361726097401e-13
+2023-12-02 02:20:47,244 - DEBUG - tol: 1e-10
+2023-12-02 02:20:47,244 - DEBUG - 
+
+2023-12-02 02:20:47,994 - DEBUG - GMRES for test: 2
+2023-12-02 02:54:28,714 - DEBUG - metadata
+2023-12-02 02:54:28,714 - DEBUG - seconds elapsed: 2020.7189664840698
+2023-12-02 02:54:28,715 - DEBUG - size of n: 2000
+2023-12-02 02:54:28,715 - DEBUG - number of iterations: 2000
+2023-12-02 02:54:28,715 - DEBUG - converged: True
+2023-12-02 02:54:28,715 - DEBUG - x0_zeros: True
+2023-12-02 02:54:28,715 - DEBUG - max_epochs: 3
+2023-12-02 02:54:28,715 - DEBUG - ||Ax - b||: 3.2793372974606025e-12
+2023-12-02 02:54:28,715 - DEBUG - tol: 1e-10
+2023-12-02 02:54:28,715 - DEBUG - 
+
+2023-12-02 02:54:29,483 - DEBUG - GMRES for test: 3
+2023-12-02 03:27:51,254 - DEBUG - Did not Converge on first epoch, performing additional epochs
+2023-12-02 03:27:51,255 - DEBUG - number of iterations: 2000
+2023-12-02 04:01:12,572 - DEBUG - Did not Converge on first epoch, performing additional epochs
+2023-12-02 04:01:12,572 - DEBUG - number of iterations: 4000
+2023-12-02 04:34:35,163 - DEBUG - metadata
+2023-12-02 04:34:35,163 - DEBUG - seconds elapsed: 6005.678953886032
+2023-12-02 04:34:35,163 - DEBUG - size of n: 2000
+2023-12-02 04:34:35,163 - DEBUG - number of iterations: 6000
+2023-12-02 04:34:35,163 - DEBUG - converged: False
+2023-12-02 04:34:35,163 - DEBUG - x0_zeros: True
+2023-12-02 04:34:35,163 - DEBUG - max_epochs: 3
+2023-12-02 04:34:35,163 - DEBUG - ||Ax - b||: 15.45186924141432
+2023-12-02 04:34:35,163 - DEBUG - tol: 1e-10
+2023-12-02 04:34:35,164 - DEBUG - 
+
+2023-12-02 04:34:36,273 - DEBUG - GMRES for test: 4
+2023-12-02 04:34:37,566 - DEBUG - metadata
+2023-12-02 04:34:37,566 - DEBUG - seconds elapsed: 1.2922873497009277
+2023-12-02 04:34:37,566 - DEBUG - size of n: 2000
+2023-12-02 04:34:37,566 - DEBUG - number of iterations: 56
+2023-12-02 04:34:37,566 - DEBUG - converged: True
+2023-12-02 04:34:37,567 - DEBUG - x0_zeros: True
+2023-12-02 04:34:37,567 - DEBUG - max_epochs: 3
+2023-12-02 04:34:37,567 - DEBUG - ||Ax - b||: 9.330177762668842e-11
+2023-12-02 04:34:37,567 - DEBUG - tol: 1e-10
+2023-12-02 04:34:37,567 - DEBUG - 
+
