@@ -65,7 +65,7 @@ def gmres(A, b, x0, k, tol=1E-10):
         x = x0 + V[:,:j] @ y
 
         # we converged on an approximate solution within tol 
-        if (np.linalg.norm(A@x - b.transpose()) <= tol*np.linalg.norm(b)):
+        if (np.linalg.norm(A@x - b.transpose()) < tol):
             return x, True, j
         
     # did not converge of an approximate solution
