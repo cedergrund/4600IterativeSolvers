@@ -31,7 +31,7 @@ def driver():
             it_ray[i],
             time_real[i],
             accurate,
-        ) = testOne(n, sparse=True)
+        ) = testOne(n, diag=True)
 
         if not accurate[0]:
             err_p.append(i)
@@ -57,7 +57,7 @@ def driver():
             it_ray[i + num1],
             time_real[i + num1],
             accurate,
-        ) = testOne(n, sparse=True)
+        ) = testOne(n, diag=True)
 
         if not accurate[0]:
             err_p.append(i + num1)
@@ -92,7 +92,7 @@ def driver():
     plt.semilogy(sizes, time_ray, "g.", label="Rayleigh Ritz Method")
     plt.semilogy(sizes[err_inv], time_inv[err_inv], "rx")
     plt.semilogy(sizes[err_ray], time_ray[err_ray], "gx")
-    plt.semilogy(sizes, time_real, "k.", label="np.eig()")
+    # plt.semilogy(sizes, time_real, "k.", label="np.eig()")
     plt.title("real tridiagonal matrix", style="italic")
     plt.suptitle("Time to compute Eigenvalues")
     plt.xlabel("Size, $n$", fontsize=14)
@@ -103,14 +103,25 @@ def driver():
     return
 
 
-def testOne(n, sym=False, diag=False):
+def testOne(n, sym=False, sparse=False, PD=False, SPD=False, diag=False):
     if sym:
         A = np.random.rand(n, n)
         At = np.transpose(A)
         A = np.matmul(At, A)
+    elif sparse:
+        A = scipy.sparse.random(n, n, 0.5)
+        A = A.A
+    elif PD:
+        A = np.random.random((n, n))
+        A = np.multiply(0.5, np.matmul(A, np.transpose(A)))
+        A = np.add(A, np.multiply(n, np.identity(n)))
+    elif SPD:
+        A = np.random.random((n, n))
+        A = np.multiply(0.5, np.matmul(A, np.transpose(A)))
     elif diag:
         k = 1
         k1 = np.random.random((2 * k + 1, n))
+        # k1 = np.where(k1 == 0, 0.01, k1)
         k2 = np.concatenate([np.arange(0, k + 1, 1), np.arange(-k, 0, 1)])
         sp = scipy.sparse.diags(k1, k2)
         A = sp.toarray()
@@ -223,54 +234,6 @@ def rayleighQuotient(A, tol=1e-10, Nmax=10000):
         e0 = e1
 
     return e1, v1, count
-
-
-def generatePDmatrix(
-    n=3, sparse=False, density=0.1, SPD=False, banded=False, k=0, verbose=False
-):
-    """
-    Method for generating a positive definite matrix. \n
-    Parameters:
-        int n: size of returned matrices,\n
-        bool sparse: if True, generates a sparse PD matrix, \n
-        float density (0,1): density of sparse matrix, defaults to 0.1. 1 is fully populated, \n
-        bool SPD = if True, returns a semi-positive matrix instead of a positive definite,\n
-        bool banded = if True, returns a banded positive matrix instead of a positive definite,\n
-        int k: used in conjuction with 'banded' parameter as width of banded matrix. 0 is just diagonal,\n
-        bool verbose = if True, will print output including matrix, eigenvalues, and rate of convergence\n
-    Returns:
-        np.matrix A: random matrix,\n
-    References:
-        For generating random PD matrices:
-            @Daryl on stack exchange - translated code from matlab
-            link - https://math.stackexchange.com/questions/357980/how-to-generate-random-symmetric-positive-definite-matrices-using-matlab
-    """
-
-    # generate a positive definite matrix
-    if not sparse:
-        # normal random
-        A = np.random.random((n, n))
-        A = np.multiply(0.5, np.matmul(A, np.transpose(A)))
-        if not SPD:
-            # make matrix positive definite
-            A = np.add(A, np.multiply(n, np.identity(n)))
-    elif banded:
-        # random banded positive definite matrix creation
-        k = k + 1
-        k1 = np.random.random((k, n))
-        k2 = np.arange(0, k, 1)
-        sp = scipy.sparse.diags(k1, k2)
-        A = sp.toarray()
-        A = A + np.transpose(A) - np.diag(np.diag(A))
-        A = np.add(A, np.multiply(len(A), np.identity(len(A))))
-    else:
-        # random sparse positive definite matrix creation
-        A = scipy.sparse.random(n, n, density)
-        A = np.triu(A.A)
-        A = A + np.transpose(A) - np.diag(np.diag(A))
-        A = np.add(A, np.multiply(n, np.identity(n)))
-
-    return A
 
 
 if __name__ == "__main__":
