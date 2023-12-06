@@ -25,11 +25,13 @@ Questions for TA/Professor: why is norm on numpy different from calculated norm 
 
 def driver():
     # testing on various parameters. outputs plots. Included all of them in outputs folder
-    num1, dens1 = 100, 25
-    num2, dens2 = 50, 50
+    num1, dens1 = 100, 10
+    num2, dens2 = 50, 20
     sizes = np.zeros(num1 + num2)
     rtd = np.zeros(num1 + num2)
     itd = np.zeros(num1 + num2)
+    rich_it = np.zeros(num1 + num2)
+    err = []
 
     for i in range(num1):
         # size of matrix
@@ -39,12 +41,15 @@ def driver():
         sizes[i] = n
 
         # generate matrices
-        A, IalphA, alpha = generatePDmatrix(n=n)
+        # A, IalphA, alpha = random_cov(n)
+        A, IalphA, alpha = generatePDmatrix(n=n, SPD=True)
         b = np.random.randint(-5, 5, (n, 1))
         x0 = np.zeros((n, 1))
 
         # output run-time
-        rtd[i], itd[i] = quickTesting(n, A, IalphA, alpha, b, x0)
+        rtd[i], itd[i], rich_it[i], accurate = quickTesting(n, A, IalphA, alpha, b, x0)
+        if not accurate:
+            err.append(i)
 
     for i in range(num2):
         # size of matrix
@@ -54,28 +59,37 @@ def driver():
         sizes[i + num1] = n
 
         # generate matrices
-        A, IalphA, alpha = generatePDmatrix(n=n)
+        # A, IalphA, alpha = random_cov(n)
+        A, IalphA, alpha = generatePDmatrix(n=n, SPD=True)
         b = np.random.randint(-5, 5, (n, 1))
         x0 = np.zeros((n, 1))
 
-        rtd[i + num1], itd[i + num1] = quickTesting(n, A, IalphA, alpha, b, x0)
+        (
+            rtd[i + num1],
+            itd[i + num1],
+            rich_it[i + num1],
+            accurate,
+        ) = quickTesting(n, A, IalphA, alpha, b, x0)
+        if not accurate:
+            err.append(i + num1)
 
     plt.figure()
-    plt.plot(sizes, rtd, "b.", label="Richardson's Iteration")
-    plt.plot(sizes, itd, "r.", label="Direct Inversion")
-    plt.title("positive definite matrix", style="italic")
+    plt.semilogy(sizes, rtd, "b.", label="Richardson's Iteration")
+    plt.plot(sizes[err], rtd[err], "bx")
+    plt.semilogy(sizes, itd, "r.", label="Direct Inversion")
+    plt.title("positive semi-definite matrix", style="italic")
     plt.suptitle("Computational time for Richardson's Iteration vs. Direct Inversion")
     plt.xlabel("Size, $n$", fontsize=14)
     plt.ylabel("Time to compute, $seconds$", fontsize=14)
     plt.legend()
 
     plt.figure()
-    plt.semilogy(sizes, rtd, "b.", label="Richardson's Iteration")
-    plt.semilogy(sizes, itd, "r.", label="Direct Inversion")
-    plt.title("positive definite matrix", style="italic")
-    plt.suptitle("Computational time for Richardson's Iteration vs. Direct Inversion")
+    plt.semilogy(sizes, rich_it, "b.", label="Richardson's Iteration")
+    plt.semilogy(sizes[err], rich_it[err], "bx")
+    plt.title("positive semi-definite matrix", style="italic")
+    plt.suptitle("Iterations for Richardson's Iteration to converge")
     plt.xlabel("Size, $n$", fontsize=14)
-    plt.ylabel("Log-scale", fontsize=14)
+    plt.ylabel("Iterations", fontsize=14)
     plt.legend()
     plt.show()
     return
@@ -102,7 +116,7 @@ def quickTesting(n, A, IalphA, alpha, b, x0, verbose=False):
     if verbose:
         print("Running Richardson's Iteration:")
     rt0 = time.time()
-    rich_sol = richardsonIteration(
+    rich_sol, rich_it = richardsonIteration(
         A,
         IalphA,
         np.multiply(alpha, b),
@@ -122,10 +136,13 @@ def quickTesting(n, A, IalphA, alpha, b, x0, verbose=False):
     ex_sol = np.matmul(np.linalg.inv(A), b)
     it1 = time.time()
     itd = it1 - it0
+    err = np.linalg.norm(abs(rich_sol) - abs(ex_sol))
+    accurate = err < 1e-3
+    print(rich_it, accurate)
     if verbose:
         print("Error:", np.linalg.norm(np.matmul(A, ex_sol) - b))
         print("Time Taken:", itd)
-    return rtd, itd
+    return rtd, itd, rich_it, accurate
 
 
 def rateOfConvergence(iterations, b, plot=False):
@@ -182,13 +199,9 @@ def richardsonIteration(
         for i in range(1, Nmax):
             x1 = np.add(np.matmul(IalphA, x0), alphb)
             if np.linalg.norm(x1 - x0) < tol:
-                if verbose:
-                    print("converged after", i, "iterations")
-                return x1
+                return x1, i
             x0 = x1
-        if verbose:
-            print("no solution found")
-        return x1
+        return x1, Nmax
 
     # initial variable definition
     n = len(IalphA)
@@ -268,7 +281,12 @@ def generatePDmatrix(
 
     # calculate alpha and ||I-alpha*A|| norm
     eig_vals, _ = np.linalg.eigh(A)
-    alpha = 2 / (eig_vals[0] + eig_vals[-1])
+    ind1 = np.argmax(abs(eig_vals))
+    ind2 = np.argmin(abs(eig_vals))
+    eig_val1 = eig_vals[ind1].real
+    eig_val2 = eig_vals[ind2].real
+    # print(eig_val1, eig_val2)
+    alpha = 2 / (eig_val1 + eig_val2)
     convergence_mat = np.identity(n) - np.multiply(alpha, A)
 
     # print if desired before returning
@@ -289,6 +307,28 @@ def generatePDmatrix(
             1 - 2 * eig_vals[0] / (eig_vals[0] + eig_vals[-1]),
             "\n",
         )
+
+    return A, convergence_mat, alpha
+
+
+def random_cov(n):
+    Q = np.random.random((n, n))
+
+    eigen_mean = n
+    Qt = np.transpose(Q)
+    A = np.abs(eigen_mean + np.random.random((n, 1)))
+    A = np.diag(A.flatten())
+    A = np.matmul(Qt, A)
+    A = np.matmul(A, Q)
+
+    eig_vals, _ = np.linalg.eigh(A)
+    ind1 = np.argmax(abs(eig_vals))
+    ind2 = np.argmin(abs(eig_vals))
+    eig_val1 = eig_vals[ind1].real
+    eig_val2 = eig_vals[ind2].real
+    # print(eig_val1, eig_val2)
+    alpha = 2 / (eig_val1 + eig_val2)
+    convergence_mat = np.eye(n) - np.multiply(alpha, A)
 
     return A, convergence_mat, alpha
 

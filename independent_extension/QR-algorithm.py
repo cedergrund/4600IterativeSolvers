@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def driver():
-    print(testOne(5))
+    print(testOne(4, Hes=True))
 
     return
     num1, dens1 = 5, 100
@@ -71,17 +71,23 @@ def driver():
     return
 
 
-def testOne(n, sym=False, diag=False):
+def testOne(n, sym=False, diag=False, Hes=False):
     if sym:
         A = np.random.rand(n, n)
         At = np.transpose(A)
         A = np.matmul(At, A)
+    elif Hes:
+        A = np.random.rand(n, n)
+        A = scipy.linalg.hessenberg(A)
+        print(A)
     elif diag:
         k = 1
         k1 = np.random.random((2 * k + 1, n))
         k2 = np.concatenate([np.arange(0, k + 1, 1), np.arange(-k, 0, 1)])
         sp = scipy.sparse.diags(k1, k2)
         A = sp.toarray()
+        A = np.matmul(A, np.transpose(A))
+        # print(A)
     else:
         A = np.random.rand(n, n)
 
@@ -94,10 +100,9 @@ def testOne(n, sym=False, diag=False):
     R = np.sort(np.diag(R))
 
     t0 = time.time()
-    if sym:
+    if sym or diag:
         eig_vals, _ = np.linalg.eigh(A)
     else:
-        eig_vals, _ = np.linalg.eig(A)
         eig_vals, _ = np.linalg.eig(A)
     t1 = time.time()
     eig_vals = np.sort(eig_vals.real)
