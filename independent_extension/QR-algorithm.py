@@ -5,197 +5,348 @@ import matplotlib.pyplot as plt
 
 
 def driver():
-    print(testOne(4, Hes=True))
+    num_avg = 10
+    t0 = time.time()
+    n = 50
+    iterations = np.zeros((num_avg, 3))
+    times = np.zeros((num_avg, 4))
+    error = np.zeros((num_avg, 3))
+    converged = np.zeros(3)
 
-    return
-    num1, dens1 = 5, 100
-    num2, dens2 = 0, 0
-    sizes = np.zeros(num1 + num2)
-    time_qr, it_qr = np.zeros(num1 + num2), np.zeros(num1 + num2)
-    time_real = np.zeros(num1 + num2)
-    err_qr = []
+    for i in range(num_avg):
+        print("{}%".format(i / num_avg), time.time() - t0)
+        A = createMatrix(n, cond_inf=True)
+        iterations[i], times[i], error[i], c = testOne(A, n, [True, True, True])
+        converged += c
+        print()
 
-    for i in range(num1):
-        # size of matrix
-        print("{:.0%}".format(i / (num1 + num2)))
-        n = i * dens1 + 3
-        sizes[i] = n
+    avg_it = np.mean(iterations, axis=0)
+    avg_t = np.mean(times, axis=0)
+    avg_err = np.mean(error, axis=0)
 
-        # output run-time
-        (it_qr[i], time_qr[i], time_real[i], accurate) = testOne(n, sym=True)
-
-        if not accurate:
-            err_qr.append(i)
-
-    for i in range(num2):
-        # size of matrix
-        if i % (num2 / 5) == 0:
-            print("{:.0%}".format((i + num1) / (num1 + num2)))
-        n = num1 * dens1 + 3 + i * dens2
-        sizes[i + num1] = n
-
-        # output run-time
-        (it_qr[i + num1], time_qr[i + num1], time_real[i + num1], accurate) = testOne(
-            n, sym=True
-        )
-
-        if not accurate:
-            err_qr.append(i + num1)
-
-    top = num1 * dens1 + 3 + num2 * dens2
-    x = np.linspace(0, top, 1000)
-    f = lambda x: 50000
-
-    plt.figure()
-    plt.semilogy(x, list(map(f, x)), "k--", label="max_iterations")
-    plt.semilogy(sizes, it_qr, "b.", label="QR Iteration")
-    plt.semilogy(sizes[err_qr], it_qr[err_qr], "bx")
-    plt.title("real random symmetric matrix", style="italic")
-    plt.suptitle("Iterations to compute Eigenvalues")
-    plt.xlabel("Size, $n$", fontsize=14)
-    plt.ylabel("Num. Iterations", fontsize=14)
-    plt.legend()
-    plt.show
-
-    plt.figure()
-    plt.semilogy(sizes, time_qr, "b.", label="QR Iteration")
-    plt.semilogy(sizes[err_qr], time_qr[err_qr], "bx")
-    plt.semilogy(sizes, time_real, "k.", label="np.eig()")
-    plt.title("real random symmetric matrix", style="italic")
-    plt.suptitle("Time to compute Eigenvalues")
-    plt.xlabel("Size, $n$", fontsize=14)
-    plt.ylabel("Time, seconds", fontsize=14)
-    plt.legend()
-    plt.show()
-
-    return
+    print("iterations", avg_it)
+    print("times", avg_t)
+    print("avg_error", avg_err)
+    print("converged %", converged / num_avg * 100)
 
 
-def testOne(n, sym=False, diag=False, Hes=False):
-    if sym:
-        A = np.random.rand(n, n)
-        At = np.transpose(A)
-        A = np.matmul(At, A)
-    elif Hes:
-        A = np.random.rand(n, n)
+def testOne(A, n, run):
+    iterations = np.zeros(3)
+    times = np.zeros(4)
+    error = np.zeros(3)
+    converged = np.zeros(3)
+
+    if run[0]:
+        t0 = time.time()
+        e_pure, iterations[0] = simultaneousQR(A, n, max_iter=20000)
+        t1 = time.time()
+        times[0] = t1 - t0
+        e_pure = np.sort(e_pure)
+        print("done1", times[0], iterations[0])
+
+    if run[1]:
+        t0 = time.time()
+        e_sim, iterations[1] = simple_shiftedQR(A, n, max_iter=20000)
+        t1 = time.time()
+        times[1] = t1 - t0
+        e_sim = np.sort(e_sim)
+        print("done2", times[1], iterations[1])
+
+    if run[2]:
+        t0 = time.time()
+        e_comp, iterations[2] = complex_shiftedQR(A, n, max_iter=20000)
+        t1 = time.time()
+        times[2] = t1 - t0
+        e_comp = np.sort(e_comp)
+        print("done3", times[2], iterations[2])
+
+    t0 = time.time()
+    e_real = np.sort(np.linalg.eig(A)[0])
+    t1 = time.time()
+    times[3] = t1 - t0
+
+    if run[0]:
+        error[0] = np.linalg.norm(e_pure - e_real)
+        if error[0] < 1e-3:
+            converged[0] = 1
+    if run[1]:
+        error[1] = np.linalg.norm(e_sim - e_real)
+        if error[1] < 1e-3:
+            converged[1] = 1
+    if run[2]:
+        if np.shape(e_comp) != np.shape(e_real):
+            print("oops")
+            print(len(e_comp) / len(e_real))
+        else:
+            error[2] = np.linalg.norm(e_comp - e_real)
+            if error[2] < 1e-3:
+                converged[2] = 1
+
+    return iterations, times, error, converged
+
+
+def createMatrix(n, Hes=False, same=False, cond_inf=False, factor=False, sym=False):
+    # condition 10
+    if Hes:
+        h = int(0.82 * n)
+        eig = np.linspace(n - h, n + h, n)
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
         A = scipy.linalg.hessenberg(A)
-        print(A)
-    elif diag:
-        k = 1
-        k1 = np.random.random((2 * k + 1, n))
-        k2 = np.concatenate([np.arange(0, k + 1, 1), np.arange(-k, 0, 1)])
-        sp = scipy.sparse.diags(k1, k2)
-        A = sp.toarray()
-        A = np.matmul(A, np.transpose(A))
-        # print(A)
+    elif sym:
+        h = 0.96 * n
+        eig = np.linspace(n - h, n + h, n)
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif same:
+        eig = np.array([n] * (n))
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif cond_inf:
+        eig = np.array([1e-5] + [n] * (n - 1))
+        # eig = np.linspace(0, n, n)
+        # eig = 5 * np.random.rand(n)
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        print(eig)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif factor:
+        f = 1 / 5
+        eig = 10 * f ** np.arange(n)
+        print(eig[0] / eig[-1])
+        A = generate_matrix_with_eigenvalues(n, eig)
     else:
         A = np.random.rand(n, n)
-
-    t0 = time.time()
-    _, R, it_qr = simultaneousQR(A)
-    t1 = time.time()
-    time_qr = t1 - t0
-    eps = 1e-10
-    R[np.abs(R) < eps] = 0
-    R = np.sort(np.diag(R))
-
-    t0 = time.time()
-    if sym or diag:
-        eig_vals, _ = np.linalg.eigh(A)
-    else:
-        eig_vals, _ = np.linalg.eig(A)
-    t1 = time.time()
-    eig_vals = np.sort(eig_vals.real)
-
-    time_real = t1 - t0
-
-    accurate = np.allclose(eig_vals, R)
-
-    return it_qr, time_qr, time_real, accurate
-
-
-def pureQR(A, shift=0, tol=1e-8, Nmax=100000):
-    # run power method iteration
-    for _ in range(Nmax):
-        Q, R = np.linalg.qr(A)
-        A = np.matmul(R, Q)
-
     return A
 
 
-def simultaneousQR(A, tol=1e-8):
-    # create Q initial
-    n = A.shape[1]
-    Q1 = np.eye(n)
-    Q0d = np.ones(n)
-    Q1d = np.zeros(n)
+def simultaneousQR(A, n, max_iter=1000, tol=1e-5):
+    X0 = np.eye(n)
+    e1 = np.zeros(n)
+    count = max_iter
+    for i in range(max_iter):
+        e0 = e1
+        X1 = np.matmul(A, X0)
+        Qk, Rk = np.linalg.qr(X1)
+        X0 = Qk
+        e1 = np.diag(X0)
+        if np.all(np.abs(e1 - e0) < tol):
+            count = i + 1
+            break
 
-    count = 1
+    eigen = np.diag(np.matmul(np.matmul(np.transpose(X0), A), X0))
+    return eigen, count
 
-    # run power method iteration
-    while not np.allclose(Q1d, Q0d):
-        Q0d = Q1d
-        X = np.matmul(A, Q1)
-        Q1, R = np.linalg.qr(X)
-        Q1d = np.diag(Q1)
-        count += 1
-        if count % 10000 == 0:
-            print(count)
-            if count >= 1000000:
+
+def simple_shiftedQR(A, n, max_iter=1000, tol=1e-8):
+    if n == 1:
+        return A[0, 0], 0
+    X0 = A.copy()
+    count = 0
+    e1 = np.zeros(n)
+    und1 = 10000
+    I = np.eye(n)
+    shift1 = 0
+
+    for i in range(max_iter):
+        und0 = und1
+        e0 = e1.copy()
+        shift1 = X0[n - 1, n - 1]
+        und1 = np.linalg.norm(np.diag(X0, k=-1))
+
+        # check for false convergence
+        smol = abs(abs(und1) - abs(und0)) < 1e-2
+        if smol and und1 > 1:
+            e1 = np.diag(X1)
+            # e = X0[n - 1, n - 1]
+            print("could not converge")
+            # e1, c1 = simple_shiftedQR(
+            #     X0[: n - 1, : n - 1], n - 1, max_iter=max_iter - i
+            # )
+            # e1 = np.append(e1, e)
+            return e1, i + 1
+
+        shift_mat = np.multiply(shift1, I)
+        Q, R = np.linalg.qr(X0 - shift_mat)
+        X1 = np.matmul(R, Q) + shift_mat
+        e1 = np.diag(X1)
+        if np.all(np.abs(e1 - e0) < tol):
+            if np.linalg.norm(np.diag(X1, k=-1)) < 1e-2:
+                print()
+                count = i + 1
                 break
+            e, c = pureQR(X0, n, max_iter=max_iter - i)
+            return e, c + i + 1
+        X0 = X1.copy()
+    return e1, count
 
-    # print("converged after", count, "iterations.")
-    return Q1, R, count
+
+# for m in range(n - 1, 0, -1):
+#     I = np.eye(n)
+#     while abs(X0[m, m - 1]) > tol:
+#         count += 1
+#         shift = X0[m, m]
+#         shift_mat = np.multiply(shift, I)
+#         X0 -= shift_mat
+#         Q, R = np.linalg.qr(X0)
+#         X1 = np.matmul(R, Q) + shift_mat
+#         if count > max_iter:
+#             return np.diag(X1), max_iter
+#         X0 = X1
+#     # X0 = X0[:m, :m]
+#     # print(X0)
+#     # print()
+# return np.diag(X0), count
+# # while abs(X0[m, m - 1]) > tol:
+# #     count += 1
+# #     shift = X0[m, m]
+# #     shift_mat = np.multiply(shift, I)
+# #     print(X0)
+# #     print()
+# #     X0 -= shift_mat
+# #     Q, R = np.linalg.qr(X0)
+# #     X1 = np.matmul(R, Q) + shift_mat
+# #     if count > max_iter:
+# #         return np.diag(X1), max_iter
+# #     X0 = X1
+# # print("running sim. QR after", count)
+# # e, c = simultaneousQR(X0[: n - 1, : n - 1], n - 1, max_iter=max_iter - count)
+# # e = np.append(e, X1[-1, -1])
+# # return e, c + count
 
 
-def generatePDmatrix(
-    n=3, sparse=False, density=0.1, SPD=False, banded=False, k=0, verbose=False
-):
-    """
-    Method for generating a positive definite matrix. \n
-    Parameters:
-        int n: size of returned matrices,\n
-        bool sparse: if True, generates a sparse PD matrix, \n
-        float density (0,1): density of sparse matrix, defaults to 0.1. 1 is fully populated, \n
-        bool SPD = if True, returns a semi-positive matrix instead of a positive definite,\n
-        bool banded = if True, returns a banded positive matrix instead of a positive definite,\n
-        int k: used in conjuction with 'banded' parameter as width of banded matrix. 0 is just diagonal,\n
-        bool verbose = if True, will print output including matrix, eigenvalues, and rate of convergence\n
-    Returns:
-        np.matrix A: random matrix,\n
-    References:
-        For generating random PD matrices:
-            @Daryl on stack exchange - translated code from matlab
-            link - https://math.stackexchange.com/questions/357980/how-to-generate-random-symmetric-positive-definite-matrices-using-matlab
-    """
+def pureQR(A, n, max_iter=1000, tol=1e-8):
+    Xk = A.copy()
+    count = max_iter
+    e1 = np.zeros(n)
 
-    # generate a positive definite matrix
-    if not sparse:
-        # normal random
-        A = np.random.random((n, n))
-        A = np.multiply(0.5, np.matmul(A, np.transpose(A)))
-        if not SPD:
-            # make matrix positive definite
-            A = np.add(A, np.multiply(n, np.identity(n)))
-    elif banded:
-        # random banded positive definite matrix creation
-        k = k + 1
-        k1 = np.random.random((k, n))
-        k2 = np.arange(0, k, 1)
-        sp = scipy.sparse.diags(k1, k2)
-        A = sp.toarray()
-        A = A + np.transpose(A) - np.diag(np.diag(A))
-        A = np.add(A, np.multiply(len(A), np.identity(len(A))))
-    else:
-        # random sparse positive definite matrix creation
-        A = scipy.sparse.random(n, n, density)
-        A = np.triu(A.A)
-        A = A + np.transpose(A) - np.diag(np.diag(A))
-        A = np.add(A, np.multiply(n, np.identity(n)))
+    for i in range(max_iter):
+        e0 = e1.copy()
+        Q, R = np.linalg.qr(Xk)
 
+        Xk = np.matmul(R, Q)
+        e1 = np.diag(Xk)
+        if np.all(np.abs(e1 - e0) < tol):
+            count = i + 1
+            break
+
+    eigenvalues = np.diag(Xk)
+
+    return eigenvalues, count
+
+
+def complex_shiftedQR(A, n, max_iter=1000, tol=1e-5):
+    X0 = A.copy()
+    count = 0
+    m = n - 1
+    e = np.zeros(n)
+
+    for m in range(n - 1, 0, -1):
+        I = np.eye(m + 1)
+        while abs(X0[m, m - 1]) > tol:
+            count += 1
+            shift = X0[m, m]
+            shift_mat = np.multiply(shift, I)
+            X0 -= shift_mat
+            Q, R = np.linalg.qr(X0)
+            X1 = np.matmul(R, Q) + shift_mat
+            if count > max_iter:
+                return np.diag(X1), max_iter
+            X0 = X1
+        e[m] = X0[m, m]
+        X0 = X0[:m, :m]
+
+    e[0] = X0[0, 0]
+    return e, count
+
+
+def generate_matrix_with_eigenvalues(n, eigenvalues):
+    Q, _ = np.linalg.qr(np.random.rand(n, n))
+    D = np.diag(eigenvalues)
+    A = np.matmul(np.matmul(Q, D), np.linalg.inv(Q))
     return A
 
 
+# A = createMatrix(100, sym=True)
+# # e, i = simple_shiftedQR(A, 10, max_iter=20000)
+# # e = np.sort(e)
+# r, _ = np.linalg.eig(A)
+# r = np.sort(r)
+# min_absolute_value = np.min(np.abs(r))
+# max_absolute_value = np.max(np.abs(r))
+# print(np.max(np.abs(r)) / np.min(np.abs(r)))
+# A = np.random.rand(100, 100)
+# r, _ = np.linalg.eig(A)
+# r = np.sort(r)
+# min_absolute_value = np.min(np.abs(r))
+# max_absolute_value = np.max(np.abs(r))
+# print(np.max(np.abs(r)) / np.min(np.abs(r)))
+# print(e)
+# print(r)
+# print(np.linalg.norm(e - r), i)
+
+# A = np.random.rand(n, n)
+# A = A + A.T - np.diag(A)
+# # A = A + n * np.eye(n)
+# r, _ = np.linalg.eig(A)
+# r = np.sort(r)
+# print(r)
+# r2 = np.sort(abs(r))
+# tot = 0
+# for i in range(len(r2) - 1):
+#     tot += r2[i + 1] / r2[i]
+# e, i = simultaneousQR(A, n, max_iter=50000)
+# e = np.sort(e)
+# print(np.linalg.norm(e - r), i)
+# e, i = simple_shiftedQR(A, n, max_iter=50000)
+# e = np.sort(e)
+# print(np.linalg.norm(e - r2), i)
+# print(tot / (len(r) - 1), r2[-1] / r2[0])
+# # print(r)
+# print()
+
+# n = 10
+# A = createMatrix(n, sym=True)
+# # print(A)
+
+# r, _ = np.linalg.eig(A)
+# r = np.sort(r)
+# # print(r)
+# r2 = np.sort(abs(r))
+# tot = 0
+# for i in range(len(r2) - 1):
+#     tot += r2[i + 1] / r2[i]
+# t0 = time.time()
+# e, i = simple_shiftedQR(A, n, max_iter=50000)
+# t1 = time.time()
+# e = np.sort(e)
+# print(np.linalg.norm(e - r), i, t1 - t0)
+# # print(tot / (len(r2) - 1), r2[-1] / r2[0])
+# # print(r)
+# print()
+# t0 = time.time()
+# e, i = simultaneousQR(A, n, max_iter=50000)
+# t1 = time.time()
+# e = np.sort(e)
+# print(np.linalg.norm(e - r), i, t1 - t0)
+# print()
+# t0 = time.time()
+# e, i = complex_shiftedQR(A, n, max_iter=50000)
+# t1 = time.time()
+# e = np.sort(e)
+# print(np.linalg.norm(e - r), i, t1 - t0)
+# # print()
+# # print(r)
+# # e, i = simultaneousQR(A, n, max_iter=50000)
+# # e = np.sort(e)
+# # print(np.linalg.norm(e - r), i)
+# # e, i = simple_shiftedQR(A, n, max_iter=50000)
+# # e = np.sort(e)
+# # # print(e)
+# # print(np.linalg.norm(e - r), i)
 if __name__ == "__main__":
     print("\n")
     driver()

@@ -5,82 +5,102 @@ import matplotlib.pyplot as plt
 
 
 def driver():
+    to = time.time()
+    num_avg = 1
     num1, dens1 = 100, 10
     num2, dens2 = 50, 20
-    sizes = np.zeros(num1 + num2)
-    time_p, it_p = np.zeros(num1 + num2), np.zeros(num1 + num2)
-    time_inv, it_inv = np.zeros(num1 + num2), np.zeros(num1 + num2)
-    time_ray, it_ray = np.zeros(num1 + num2), np.zeros(num1 + num2)
-    time_real = np.zeros(num1 + num2)
+    tot_sizes = np.zeros((num_avg, num1 + num2))
+    tot_time_p, tot_it_p = np.zeros((num_avg, num1 + num2)), np.zeros(
+        (num_avg, num1 + num2)
+    )
+    tot_time_inv, tot_it_inv = np.zeros((num_avg, num1 + num2)), np.zeros(
+        (num_avg, num1 + num2)
+    )
+    tot_time_ray, tot_it_ray = np.zeros((num_avg, num1 + num2)), np.zeros(
+        (num_avg, num1 + num2)
+    )
     err_p, err_inv, err_ray = [], [], []
 
-    for i in range(num1):
-        # size of matrix
-        if i % (num1 / 5) == 0:
-            print("{:.0%}".format(i / (num1 + num2)))
-        n = i * dens1 + 10
-        sizes[i] = n
+    for j in range(num_avg):
+        print(j, time.time() - to)
+        sizes = np.zeros(num1 + num2)
+        time_p, it_p = np.zeros(num1 + num2), np.zeros(num1 + num2)
+        time_inv, it_inv = np.zeros(num1 + num2), np.zeros(num1 + num2)
+        time_ray, it_ray = np.zeros(num1 + num2), np.zeros(num1 + num2)
+        err_p, err_inv, err_ray = [], [], []
 
-        # output run-time
-        (
-            time_p[i],
-            it_p[i],
-            time_inv[i],
-            it_inv[i],
-            time_ray[i],
-            it_ray[i],
-            time_real[i],
-            accurate,
-        ) = testOne(n, sparse=True)
+        for i in range(num1):
+            # size of matrix
+            if i % (num1 / 5) == 0:
+                print("{:.0%}".format(i / (num1 + num2)))
+            n = i * dens1 + 10
+            sizes[i] = n
+            A = createMatrix(n, separated=True)
 
-        if not accurate[0]:
-            err_p.append(i)
-        if not accurate[1]:
-            err_inv.append(i)
-        if not accurate[2]:
-            err_ray.append(i)
+            # output run-time
+            (
+                time_p[i],
+                it_p[i],
+                time_inv[i],
+                it_inv[i],
+                time_ray[i],
+                it_ray[i],
+                _,
+                _,
+            ) = testOne(A, n)
 
-    for i in range(num2):
-        # size of matrix
-        if i % (num2 / 5) == 0:
-            print("{:.0%}".format((i + num1) / (num1 + num2)))
-        n = num1 * dens1 + 10 + i * dens2
-        sizes[i + num1] = n
+        for i in range(num2):
+            # size of matrix
+            if i % (num2 / 5) == 0:
+                print("{:.0%}".format((i + num1) / (num1 + num2)))
+            n = num1 * dens1 + 10 + i * dens2
+            sizes[i + num1] = n
 
-        # output run-time
-        (
-            time_p[i + num1],
-            it_p[i + num1],
-            time_inv[i + num1],
-            it_inv[i + num1],
-            time_ray[i + num1],
-            it_ray[i + num1],
-            time_real[i + num1],
-            accurate,
-        ) = testOne(n, sparse=True)
+            A = createMatrix(n, separated=True)
+            # output run-time
+            (
+                time_p[i + num1],
+                it_p[i + num1],
+                time_inv[i + num1],
+                it_inv[i + num1],
+                time_ray[i + num1],
+                it_ray[i + num1],
+                _,
+                _,
+            ) = testOne(A, n)
 
-        if not accurate[0]:
-            err_p.append(i + num1)
-        if not accurate[1]:
-            err_inv.append(i + num1)
-        if not accurate[2]:
-            err_ray.append(i + num1)
+        tot_sizes[j] = sizes
+        tot_time_p[j], tot_it_p[j] = time_p, it_p
+        tot_time_inv[j], tot_it_inv[j] = time_inv, it_inv
+        tot_time_ray[j], tot_it_ray[j] = time_ray, it_ray
+        print("\n")
 
-    top = num1 * dens1 + 10 + num2 * dens2
+    avg_sizes = np.mean(tot_sizes, axis=0)
+    avg_tp = np.mean(tot_time_p, axis=0)
+    avg_ti = np.mean(tot_time_inv, axis=0)
+    avg_tr = np.mean(tot_time_ray, axis=0)
+    avg_ip = np.mean(tot_it_p, axis=0)
+    avg_ii = np.mean(tot_it_inv, axis=0)
+    avg_ir = np.mean(tot_it_ray, axis=0)
 
+    err_p.append(np.where(avg_ip == 5000)[0])
+    err_inv.append(np.where(avg_ii == 5000)[0])
+    err_ray.append(np.where(avg_ir == 5000)[0])
     plt.figure()
+
     if err_p != [] or err_inv != [] or err_ray != []:
+        top = num1 * dens1 + 10 + num2 * dens2
         x = np.linspace(0, top, 1000)
         f = lambda x: 5000
         plt.semilogy(x, list(map(f, x)), "k--", label="max_iterations")
 
-    plt.semilogy(sizes, it_p, "b.", label="Power Method")
-    plt.semilogy(sizes[err_p], it_p[err_p], "bx")
-    plt.semilogy(sizes, it_inv, "r.", label="Inverse Power Method")
-    plt.semilogy(sizes[err_inv], it_inv[err_inv], "rx")
-    plt.semilogy(sizes, it_ray, "g.", label="Rayleigh Ritz Method")
-    plt.semilogy(sizes[err_ray], it_ray[err_ray], "gx")
-    plt.title("sparse matrix, density 0.25", style="italic")
+    plt.semilogy(avg_sizes, avg_ip, "b.", label="Power Method")
+    plt.semilogy(avg_sizes[err_p], avg_ip[err_p], "bx")
+    plt.semilogy(avg_sizes, avg_ii, "r.", label="Inverse Power Method")
+    plt.semilogy(avg_sizes[err_inv], avg_ii[err_inv], "rx")
+    plt.semilogy(avg_sizes, avg_ir, "g.", label="Rayleigh Ritz Method")
+    plt.semilogy(avg_sizes[err_ray], avg_ir[err_ray], "gx")
+    plt.title("separated eigenvalues", style="italic")
     plt.suptitle("Iterations to compute Eigenvalues")
     plt.xlabel("Size, $n$", fontsize=14)
     plt.ylabel("Num. Iterations", fontsize=14)
@@ -88,14 +108,13 @@ def driver():
     plt.show
 
     plt.figure()
-    plt.semilogy(sizes, time_p, "b.", label="Power Method")
-    plt.semilogy(sizes[err_p], time_p[err_p], "bx")
-    plt.semilogy(sizes, time_inv, "r.", label="Inverse Power Method")
-    plt.semilogy(sizes, time_ray, "g.", label="Rayleigh Ritz Method")
-    plt.semilogy(sizes[err_inv], time_inv[err_inv], "rx")
-    plt.semilogy(sizes[err_ray], time_ray[err_ray], "gx")
-    # plt.semilogy(sizes, time_real, "k.", label="np.eig()")
-    plt.title("sparse matrix, density 0.25", style="italic")
+    plt.semilogy(avg_sizes, avg_tp, "b.", label="Power Method")
+    plt.semilogy(avg_sizes[err_p], avg_tp[err_p], "bx")
+    plt.semilogy(avg_sizes, avg_ti, "r.", label="Inverse Power Method")
+    plt.semilogy(avg_sizes, avg_tr, "g.", label="Rayleigh Ritz Method")
+    plt.semilogy(avg_sizes[err_inv], avg_ti[err_inv], "rx")
+    plt.semilogy(avg_sizes[err_ray], avg_tr[err_ray], "gx")
+    plt.title("separated eigenvalues", style="italic")
     plt.suptitle("Time to compute Eigenvalues")
     plt.xlabel("Size, $n$", fontsize=14)
     plt.ylabel("Time, seconds", fontsize=14)
@@ -105,32 +124,7 @@ def driver():
     return
 
 
-def testOne(n, sym=False, sparse=False, PD=False, SPD=False, diag=False):
-    if sym:
-        A = np.random.rand(n, n)
-        At = np.transpose(A)
-        A = np.matmul(At, A)
-    elif sparse:
-        A = scipy.sparse.random(n, n, 0.25)
-        A = A.A
-    elif PD:
-        # A = random_cov(n)
-        A = np.random.random((n, n))
-        A = np.multiply(0.5, np.matmul(A, np.transpose(A)))
-        A = np.add(A, np.multiply(n, np.identity(n)))
-    elif SPD:
-        A = np.random.random((n, n))
-        A = np.matmul(A, np.transpose(A))
-    elif diag:
-        k = 1
-        k1 = np.random.random((2 * k + 1, n))
-        # k1 = np.where(k1 == 0, 0.01, k1)
-        k2 = np.concatenate([np.arange(0, k + 1, 1), np.arange(-k, 0, 1)])
-        sp = scipy.sparse.diags(k1, k2)
-        A = sp.toarray()
-    else:
-        A = np.random.rand(n, n)
-
+def testOne(A, n):
     t0 = time.time()
     e1, _, it_p = powerMethod(A)
     t1 = time.time()
@@ -147,24 +141,19 @@ def testOne(n, sym=False, sparse=False, PD=False, SPD=False, diag=False):
     time_ray = t1 - t0
 
     t0 = time.time()
-    if sym or PD or SPD:
-        eig_vals, _ = np.linalg.eigh(A)
-    else:
-        eig_vals, _ = np.linalg.eig(A)
+    eig_vals, _ = np.linalg.eig(A)
     t1 = time.time()
     time_real = t1 - t0
     ind1 = np.argmax(abs(eig_vals))
     ind2 = np.argmin(abs(eig_vals))
     eig_val1 = eig_vals[ind1].real
     eig_val2 = eig_vals[ind2].real
-    print(eig_val1, eig_val2, np.average(eig_vals))
 
     accurate = [
         np.abs(e1 - eig_val1) < 1e-5,
         np.abs(e2 - eig_val2) < 1e-3,
         np.any(np.isclose(eig_vals, e3, rtol=1e-5)),
     ]
-    print(accurate[1], it_inv, e2, eig_val2, np.abs(e2 - eig_val2))
     # print(eig_vals)
 
     return time_p, it_p, time_inv, it_inv, time_ray, it_ray, time_real, accurate
@@ -208,6 +197,7 @@ def inversePowerMethod(A, shift=0, tol=1e-8, Nmax=5000):
     for i in range(Nmax):
         v1 = np.matmul(A, v0)
         v1 = np.multiply(1 / np.linalg.norm(v1), v1)
+        v1t = np.transpose(v1)
 
         if np.linalg.norm(abs(v1) - abs(v0)) < tol:
             count = i + 1
@@ -258,6 +248,42 @@ def random_cov(n):
 
     return A
 
+
+def createMatrix(n, same=False, sym=False, clustered=False, separated=False):
+    if clustered:
+        eig = np.array([99] + [100] * (n - 2) + [101])
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif separated:
+        eig = np.array([1] + [50] * (n - 2) + [2500])
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif same:
+        eig = np.array([n] * (n))
+        sign = np.random.choice([-1, 1], size=n)
+        eig = np.multiply(eig, sign)
+        A = generate_matrix_with_eigenvalues(n, eig)
+    elif sym:
+        A = np.random.random((n, n))
+        A = np.multiply(0.5, A + np.transpose(A))
+    else:
+        A = np.random.rand(n, n)
+    return A
+
+
+def generate_matrix_with_eigenvalues(n, eigenvalues):
+    Q, _ = np.linalg.qr(np.random.rand(n, n))
+    D = np.diag(eigenvalues)
+    A = np.matmul(np.matmul(Q, D), np.linalg.inv(Q))
+    return A
+
+
+# n = 2000
+# A = createMatrix(n, same=True)
+# # print(np.linalg.eig(A)[0])
+# inversePowerMethod(A)
 
 if __name__ == "__main__":
     print("\n")
