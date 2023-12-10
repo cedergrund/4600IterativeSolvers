@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def driver():
     to = time.time()
-    num_avg = 1
+    num_avg = 10
     num1, dens1 = 100, 10
     num2, dens2 = 50, 20
     tot_sizes = np.zeros((num_avg, num1 + num2))
@@ -197,7 +197,6 @@ def inversePowerMethod(A, shift=0, tol=1e-8, Nmax=5000):
     for i in range(Nmax):
         v1 = np.matmul(A, v0)
         v1 = np.multiply(1 / np.linalg.norm(v1), v1)
-        v1t = np.transpose(v1)
 
         if np.linalg.norm(abs(v1) - abs(v0)) < tol:
             count = i + 1
@@ -279,11 +278,6 @@ def generate_matrix_with_eigenvalues(n, eigenvalues):
     A = np.matmul(np.matmul(Q, D), np.linalg.inv(Q))
     return A
 
-
-# n = 2000
-# A = createMatrix(n, same=True)
-# # print(np.linalg.eig(A)[0])
-# inversePowerMethod(A)
 
 if __name__ == "__main__":
     print("\n")

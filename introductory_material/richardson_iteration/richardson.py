@@ -227,6 +227,7 @@ def generatePDmatrix(n=3, sparse=False, cond_one=False, cond_100=False, tri=Fals
         A = A.A
         A = np.triu(A + D)
         A = A + np.transpose(A) - np.diag(np.diag(A))
+        # h = c_num * (n - 1) / (1 + c_num)
     elif cond_one:
         eig = np.array([n] * (n))
         A = generate_matrix_with_eigenvalues(n, eig)
