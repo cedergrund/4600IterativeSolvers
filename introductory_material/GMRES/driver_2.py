@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # logger
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    file_handler = logging.FileHandler(os.path.join(out_dir,'other_GMRES.txt'), mode='w')
+    file_handler = logging.FileHandler(os.path.join(out_dir,'scipy_GMRES.txt'), mode='w')
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
             # call GMRES 
             logger.debug(f'GMRES for test: {i}')
-            x, info = gmres(A, b, x0, tol)
+            x, info = gmres(A, b, x0, restart=2000, tol = tol / np.linalg.norm(b))
 
             # timing 
             toc = time.time()
@@ -59,7 +59,6 @@ if __name__ == "__main__":
             metadata = {
                 'seconds elapsed' : time_elapsed,
                 'size of n' : n,
-                'number of epochs' : max_epochs,
                 'converged' : info == 0,
                 'x0_zeros' : x0_zeros,
                 'max_epochs' : max_epochs, 

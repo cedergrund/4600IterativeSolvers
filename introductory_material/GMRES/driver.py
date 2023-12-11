@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # logger
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    file_handler = logging.FileHandler(os.path.join(out_dir,'results_2.txt'), mode='w')
+    file_handler = logging.FileHandler(os.path.join(out_dir,'results_relative_error.txt'), mode='w')
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
