@@ -265,8 +265,8 @@ def createMatrix(n, same=False, sym=False, clustered=False, separated=False):
         eig = np.multiply(eig, sign)
         A = generate_matrix_with_eigenvalues(n, eig)
     elif sym:
-        A = np.random.random((n, n))
-        A = np.multiply(0.5, A + np.transpose(A))
+        A = np.triu(np.random.random((n, n)))
+        A = A + np.transpose(A) - np.diag(np.diag(A))
     else:
         A = np.random.rand(n, n)
     return A

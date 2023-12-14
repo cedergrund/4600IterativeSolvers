@@ -12,10 +12,9 @@ def driver():
     times_sym = np.zeros((num_avg, 4))
     error_sym = np.zeros((num_avg, 3))
     converged_sym = np.zeros(3)
-
     for i in range(num_avg):
         print("{}%".format(i / num_avg), time.time() - t0)
-        A = createMatrix(n, spectral=True, nums=[1e15, 0])
+        A = createMatrix(n, eq_spaced=True, nums=[1, 3], neg=True)
         iterations_sym[i], times_sym[i], error_sym[i], c = testOne(
             A, n, [True, True, True]
         )
@@ -110,8 +109,8 @@ def createMatrix(
     if neg:
         sign = np.random.choice([-1, 1], size=n)
     if sym:  # symmetric
-        A = np.random.rand(n, n)
-        A = np.multiply(1 / 2, np.add(A, np.transpose(A)))
+        A = np.triu(np.random.random((n, n)))
+        A = A + np.transpose(A) - np.diag(np.diag(A))
     elif eq_spaced:  # equally spaced from a to b
         eig = np.linspace(nums[0], nums[1], n)
         eig = np.multiply(eig, sign)
@@ -367,16 +366,18 @@ def complex_shiftedQR(A, n, max_iter=1000, tol=1e-5):
 
 
 def plot1():
-    avg_sizes = [3, 10, 100, 10000, 1e16]
+    avg_sizes = [3, 10, 100, 1e3, 1e5, 1e10, 1e15]
 
     # iterations
     vectors = np.array(
         [
-            [913.15, 1059.55, 119.35],
-            [664.5, 641.9, 127.5],
-            [578.75, 644.65, 135.95],
-            [601.55, 882.65, 141.05],
-            [732.65, 872.15, 96.85],
+            [892.95, 1064.45, 123.45],
+            [675.95, 564.5, 124.95],
+            [588.25, 805.3, 135.85],
+            [603.75, 854.55, 138.2],
+            [582.85, 956.5, 151.15],
+            [594.65, 2077.35, 172.0],
+            [608.35, 1855.5, 186.65],
         ]
     )
 
@@ -387,11 +388,13 @@ def plot1():
 
     vectors_set2 = np.array(
         [
-            [1187.7, 1520.85, 71.5],
-            [879.65, 666.9, 72.65],
-            [757.85, 700.25, 87.5],
-            [596.95, 976.6, 142.25],
-            [758.6, 715.6, 94.35],
+            [1175.05, 2224.4, 72.3],
+            [877.85, 655.35, 75.0],
+            [784.95, 733.0, 85.7],
+            [746.1, 826.65, 91.95],
+            [741.5, 833.8, 99.9],
+            [745.05, 1443.8, 113.35],
+            [763.0, 2311.1, 122.9],
         ]
     )
 
@@ -402,11 +405,13 @@ def plot1():
 
     vectors_set3 = np.array(
         [
-            [0.09396802, 0.10505583, 0.00637033, 0.00068958],
-            [0.07536761, 0.06852865, 0.00706369, 0.00065017],
-            [0.06650832, 0.077739, 0.00737373, 0.00070755],
-            [0.07123842, 0.09742026, 0.00874407, 0.00099396],
-            [0.07438585, 0.08198733, 0.00525943, 0.00062884],
+            [0.10936605, 0.11535851, 0.00854869, 0.00120006],
+            [0.0772926, 0.06367843, 0.00835354, 0.00077295],
+            [0.06940193, 0.08457741, 0.00863376, 0.00088198],
+            [0.07058729, 0.09236125, 0.00898387, 0.00077404],
+            [0.06989833, 0.10395123, 0.00998772, 0.00099924],
+            [0.07528237, 0.19176294, 0.0080158, 0.00089997],
+            [0.07084101, 0.17970996, 0.00934169, 0.00097957],
         ]
     )
 
@@ -418,11 +423,13 @@ def plot1():
 
     vectors_set4 = np.array(
         [
-            [0.13672819, 0.15322791, 0.00373062, 0.00056467],
-            [0.10225344, 0.07384119, 0.0063252, 0.00069571],
-            [0.08485484, 0.07603853, 0.00553371, 0.00065397],
-            [0.06887645, 0.09767246, 0.00763993, 0.00070417],
-            [0.09150424, 0.08132341, 0.00558608, 0.000711],
+            [0.1494934, 0.20636781, 0.00355257, 0.00056262],
+            [0.09486862, 0.07422334, 0.00464697, 0.00055958],
+            [0.08854975, 0.07836691, 0.00538294, 0.00078099],
+            [0.08007268, 0.0816784, 0.00499706, 0.00068421],
+            [0.08321828, 0.09101272, 0.00539486, 0.00072367],
+            [0.08597834, 0.13811313, 0.00503407, 0.00069045],
+            [0.0855304, 0.19237254, 0.00620633, 0.00072806],
         ]
     )
 
@@ -433,6 +440,9 @@ def plot1():
     neg_eig_time = vectors_set4[:, 3]
 
     plt.figure()
+    x = np.linspace(0, 1e15, 10000)
+    f = lambda x: 20000
+    plt.loglog(x, list(map(f, x)), "k--", label="max_iterations")
     plt.loglog(avg_sizes, pos_si_iter, "b.-", label="$+\lambda$ Sim. Iteration")
     plt.loglog(avg_sizes, neg_si_iter, "b.--", label="$\pm\lambda$ Sim. Iteration")
     plt.loglog(avg_sizes, pos_ls_iter, "r.-", label="$+\lambda$ Lazy Shift")
@@ -453,7 +463,7 @@ def plot1():
     plt.loglog(avg_sizes, pos_cs_time, "g.-", label="$+\lambda$ Complex Shift")
     plt.loglog(avg_sizes, neg_cs_time, "g.--", label="$\pm\lambda$ Complex Shift")
     plt.loglog(avg_sizes, pos_eig_time, "k.-", label="$+\lambda$ np.eig()")
-    plt.loglog(avg_sizes, neg_eig_time, "k.-", label="$\pm\lambda$ np.eig()")
+    plt.loglog(avg_sizes, neg_eig_time, "k.--", label="$\pm\lambda$ np.eig()")
     plt.title("symmetric matrix, $n=50$", style="italic")
     plt.suptitle("Time to compute Eigenvalues")
     plt.xlabel("Condition number, $\kappa(A)$", fontsize=14)
@@ -535,7 +545,7 @@ def plot2():
 
 
 plot1()
-plot2()
+# plot2()
 # if __name__ == "__main__":
 #     print("\n")
 #     driver()
