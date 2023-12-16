@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # logger
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    file_handler = logging.FileHandler(os.path.join(out_dir,'scipy_GMRES.txt'), mode='w')
+    file_handler = logging.FileHandler(os.path.join(out_dir,'scipy_GMRES_3_6.txt'), mode='w')
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     # parameters 
     n = 2000
-    run_tests = [1, 1, 1, 1, 1]
+    run_tests = [0, 0, 1, 0, 0, 1]
     x0_zeros = True
     max_epochs = 3
     max_iter = n
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
             # call GMRES 
             logger.debug(f'GMRES for test: {i}')
-            x, info = gmres(A, b, x0, restart=2000, tol = tol / np.linalg.norm(b))
+            x, info = gmres(A, b, x0, tol = tol / np.linalg.norm(b))
 
             # timing 
             toc = time.time()
