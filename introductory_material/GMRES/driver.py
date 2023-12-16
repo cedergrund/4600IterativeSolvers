@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # logger
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    file_handler = logging.FileHandler(os.path.join(out_dir,'results_relative_error.txt'), mode='w')
+    file_handler = logging.FileHandler(os.path.join(out_dir,'3_6_only.txt'), mode='w')
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     # parameters 
     n = 2000
-    run_tests = [1, 1, 1, 1, 1]
+    run_tests = [0, 0, 1, 0, 0, 1]
     x0_zeros = True
     max_epochs = 3
     max_iter = max_epochs*n
