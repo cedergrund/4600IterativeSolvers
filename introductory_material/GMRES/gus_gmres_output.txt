@@ -1,0 +1,69 @@
+
+scenario 1 - well separated
+A matrix with 2000 distinct well separated eigenvalues
+
+gmres done after 131.92817974090576
+gmres not converged after 20000 iterations
+
+error gmres 0.0671731137483782
+error inv 1.7698951967925977e-06
+
+
+scenario 2 -
+A full rank matrix with 1 distinct eigenvalue
+
+gmres done after 0.0011050701141357422
+gmres successful
+
+error gmres 1.1019963027352094e-12
+error inv 1.666516075896184e-14
+
+
+scenario 3 -
+A full rank matrix with 3 distinct eigenvalue
+
+gmres done after 0.0015761852264404297
+gmres successful
+
+error gmres 3.032469138434001e-13
+error inv 3.6689471490174444e-14
+
+
+scenario 4-
+A full rank matrix where all eigenvalues are in a ball of radius 10e-5 centered at 1
+
+gmres done after 0.0010478496551513672
+gmres successful
+
+error gmres 9.432833318988708e-05
+error inv 1.9453344932755975e-14
+
+scenario 5-
+A matrix whose condition number is larger than 10e20 (equally spaced bw 1e-10 and 1e11)
+
+// condition number 3.961346504545617e+16
+gmres done after 135.22055220603943
+gmres not converged after 20000 iterations
+
+error gmres 19.41989663926755
+error inv 1443.7688899554573
+
+A matrix whose condition number is larger than 10e20 (equally spaced bw 0 and 1999)
+
+condition number inf
+gmres done after 131.84528613090515
+gmres not converged after 20000 iterations
+
+error gmres 18.99837006077414
+error inv 1313.5889035105222
+
+
+scenario 6-
+A matrix who has one zero eigenvalue with b in the range(A)
+
+condition number 1.1857734686274208e+16
+gmres done after 47.16598987579346
+gmres successful
+
+error gmres 0.01167025730168816
+error inv 61328.394287656476
