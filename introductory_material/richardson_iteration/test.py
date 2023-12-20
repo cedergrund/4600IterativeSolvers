@@ -68,7 +68,7 @@ n = 2000
 #     diagonal_entries.append(np.random.randint(1, 4))
 # print(diagonal_entries)
 
-A, b = createMatrix(n, option=6)
+A, b = createMatrix(n, option=2)
 eigs = np.sort(np.abs(np.linalg.eig(A)[0]))
 # print(eigs)
 print("condition number", eigs[-1] / eigs[0])

@@ -6,15 +6,17 @@ import time
 
 def driver():
     # testing on various parameters. outputs plots. Included all of them in outputs folder
-    num_avg = 5
-    n_eval = 25
+    num_avg = 1
+    n_eval = 30
     n = 2000
 
-    x_dense_part = np.logspace(0, 4, num=12, base=10)
-    x_dense_part = x_dense_part[x_dense_part != 1e4]
+    x_dense_part = np.logspace(0, 5, num=18, base=10)
+    x_dense_part = x_dense_part[x_dense_part != 1e5]
     n_eval -= 1
-    x_sparse_part = np.logspace(4, 20, num=n_eval - len(x_dense_part), base=10)
+    x_sparse_part = np.logspace(5, 10, num=n_eval - len(x_dense_part), base=10)
     x_values = np.concatenate([x_dense_part, x_sparse_part])
+    print("\n")
+    # x_values = np.linspace(1, 1e4, n_eval)
 
     tot_real_sizes = np.zeros((num_avg, n_eval))
     tot_err_rich = np.zeros((num_avg, n_eval))
@@ -51,6 +53,7 @@ def driver():
                 errors[0][j] = 0
             if accurate[1]:
                 errors[1][j] = 0
+            print()
 
         tot_real_sizes[i] = real_sizes
         tot_err_rich[i] = err_rich
@@ -58,7 +61,7 @@ def driver():
         tot_rtd[i] = rtd
         tot_itd[i] = itd
         tot_rich_it[i] = rich_it
-        print()
+        print("\n")
 
     avg_size = np.mean(tot_real_sizes, axis=0)
     indices_sorted = np.argsort(avg_size)
@@ -131,14 +134,14 @@ def driver():
 def allSizes():
     # testing on various parameters. outputs plots. Included all of them in outputs folder
     to = time.time()
-    num_avg = 5
+    num_avg = 1
 
     # start = 205
     # num1, dens1 = 67, 15
     # num2, dens2 = 43, 30
     start = 50
-    num1, dens1 = 100, 10
-    num2, dens2 = 50, 20
+    num1, dens1 = 49, 50
+    num2, dens2 = 25, 100
     # num1, dens1 = 50, 10
     # num2, dens2 = 20, 20
     tot_sizes = np.zeros((num_avg, num1 + num2))
@@ -258,7 +261,7 @@ def quickTesting(n, A, b, IalphA, alphb):
     err_inv = np.linalg.norm(np.matmul(A, ex_sol) - b)
     err = [err_rich, err_inv]
     accurate = [err_rich < 1e-2, err_inv < 1e-2]
-    print(rich_it, err_rich)
+    print(rich_it, err_rich, rtd)
     if not accurate[0]:
         print("richardsons fail!", err[0], "in {} iterations".format(rich_it))
     if not accurate[1]:
@@ -386,7 +389,7 @@ def richardsonIterationOld(
 
 
 if __name__ == "__main__":
-    allSizes()
-    # print("\n")
-    # driver()
-    # print("\n")
+    # allSizes()
+    print("\n")
+    driver()
+    print("\n")

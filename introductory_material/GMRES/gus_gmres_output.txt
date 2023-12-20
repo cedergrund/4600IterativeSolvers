@@ -30,7 +30,7 @@ error inv 3.6689471490174444e-14
 
 
 scenario 4-
-A full rank matrix where all eigenvalues are in a ball of radius 10e-5 centered at 1
+A full rank matrix where all eigenvalues are in a ball of radius 1e-5 centered at 1
 
 gmres done after 0.0010478496551513672
 gmres successful
@@ -39,7 +39,7 @@ error gmres 9.432833318988708e-05
 error inv 1.9453344932755975e-14
 
 scenario 5-
-A matrix whose condition number is larger than 10e20 (equally spaced bw 1e-10 and 1e11)
+A matrix whose condition number is larger than 1e20 (equally spaced bw 1e-10 and 1e11)
 
 // condition number 3.961346504545617e+16
 gmres done after 135.22055220603943
@@ -48,7 +48,7 @@ gmres not converged after 20000 iterations
 error gmres 19.41989663926755
 error inv 1443.7688899554573
 
-A matrix whose condition number is larger than 10e20 (equally spaced bw 0 and 1999)
+A matrix whose condition number is larger than 1e20 (equally spaced bw 0 and 1999)
 
 condition number inf
 gmres done after 131.84528613090515
